@@ -33,13 +33,15 @@ def downloadDrawList(bid,page):
 		items = rspJson['data']['items']
 		
 		for i in items:
-			urls = []
+			urls = {}
 			did = str(i['doc_id'])
 			
 			# Single item traversal
+			count = 0
 			for j in i['pictures']:
-				urls.append(j['img_src'])
-				
+				urls[count]=j['img_src']
+				count+=1
+			
 			# Download
 			downloadDraw(bid,did,urls)
 	except Exception as e:
@@ -49,17 +51,29 @@ def downloadDrawList(bid,page):
 # Download draws
 def downloadDraw(bid,did,urls):
 	count = 0
-	for u in urls:
+	for i in range(len(urls)):
+		u = urls[i]
 		try:
-			print('Downloading '+did+' '+u)
-			# Download single image
-			req = requests.get(u,timeout=20)
 			# Get image format from url
 			suffix = u.split(".")[-1]
+			
+			# File naming
+			## bid: Bilibili user id
+			## did: Draw id
+			fileName = did+'_b'+str(count)+'.'+suffix
+			
+			if(os.path.exists('./'+bid+'/'+fileName)):
+				print('Skipped '+did+' '+u)
+				count+=1
+				continue
+			print('Downloading '+did+' '+u)
+			# Download single image
+			req = requests.get(u,timeout=20)			
 			# Create image file
-			with open('./'+bid+'/'+did+'_b'+str(count)+'.'+suffix,'wb') as f:
+			with open('./'+bid+'/'+fileName,'wb') as f:
 				f.write(req.content)
-		except:
+		except Exception as e:
+			print(e)
 			print('Fail to download: '+did+' '+u)
 			
 		count+=1
