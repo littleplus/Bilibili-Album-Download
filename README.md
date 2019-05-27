@@ -1,4 +1,4 @@
-# Bilibili Album Download
+# Bilibili相簿下载(Bilibili Album Download)
 ## 中文介绍
 ### 快速食用
 - 下载bilibili_album.py到任意一个文件夹
