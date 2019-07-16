@@ -1,4 +1,4 @@
-#encoding=utf-8
+#coding=utf-8
 import requests,os,sys
 
 basicApiUrl='https://api.vc.bilibili.com/link_draw/v1/doc/upload_count?uid='
