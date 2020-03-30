@@ -1,5 +1,5 @@
 #coding=utf-8
-import requests,os,sys
+import requests,os,sys,math
 
 basicApiUrl='https://api.vc.bilibili.com/link_draw/v1/doc/upload_count?uid='
 apiUrl='https://api.vc.bilibili.com/link_draw/v1/doc/doc_list?page_size=30&biz=all&uid='
@@ -92,7 +92,7 @@ if __name__=='__main__':
 		pass
 
 	totalDraw = getTotalDraw(bid)
-	totalPage = int(totalDraw/30)+1 if totalDraw % 30 != 0 else totalDraw/30
+	totalPage = math.ceil(totalDraw/30)
 	for page in range(totalPage):
 		downloadDrawList(bid,page)
 	
