@@ -27,3 +27,8 @@
 - The default file name is, 'Album ID' + '_b' + 'index'.'Image format'
 - Currently, the script is a single-threaded download method; if the number of images for a single user is large, it may take quite a long time.
 - This script will probably not be modified again; if there are running errors, you can raise issues, but there is no guarantee to change.
+
+## TODO
+
+- Add config files to record downloaded post!
+- use wget method to download failed images
