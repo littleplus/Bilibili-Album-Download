@@ -1,7 +1,6 @@
 import time, datetime
 import requests, os, sys, math
 
-
 basicApiUrl = "https://api.vc.bilibili.com/link_draw/v1/doc/upload_count?uid="
 apiUrl = (
     "https://api.vc.bilibili.com/link_draw/v1/doc/doc_list?page_size=30&biz=all&uid="
@@ -65,6 +64,13 @@ def downloadDrawList(bid, page, base_dir='~/Photos'):
                 count += 1
 
             # Download
+
+            with open(os.path.join(usr_dir, "failed.txt"), 'w') as fail_file:
+                from time import gmtime, strftime
+                starting_str = "Last downloaded at {}".format(
+                    strftime("%Y-%m-%d %H:%M:%S", gmtime())
+                    )
+                fail_file.write(starting_str+'\n')
             downloadDraw(bid, did, urls, usr_dir, date, desc)
     except Exception as e:
         print(e)
@@ -79,10 +85,14 @@ def downloadDraw(bid, did, urls, usr_dir, date, desc):
         subdir = "{}_{}".format(date, desc.strip()[:10])
     subdir_path = os.path.join(usr_dir, subdir)
     print("Image saved in", subdir_path)
-    os.makedirs(subdir_path)
+    if not os.path.exists(subdir_path):
+        os.makedirs(subdir_path)
 
     with open(os.path.join(subdir_path, "description.txt"), "w") as dsec_file:
         dsec_file.write(desc)
+
+    with open(os.path.join(usr_dir, "failed.txt"), 'a') as fail_file:
+        fail_file.write(subdir+'\n')
 
     count = 0
     for i in range(len(urls)):
@@ -96,7 +106,9 @@ def downloadDraw(bid, did, urls, usr_dir, date, desc):
             ## did: Draw id
             fileName = did + "_b" + str(count) + "." + suffix
 
-            if os.path.exists("./" + bid + "/" + fileName):
+            img_path = os.path.join(subdir_path, fileName)
+
+            if os.path.exists(img_path):
                 print("Skipped " + did + " " + img_url)
                 count += 1
                 continue
@@ -104,12 +116,15 @@ def downloadDraw(bid, did, urls, usr_dir, date, desc):
             # Download single image
             req = requests.get(img_url, timeout=20, headers=headers)
             # Create image file
-            # './'+bid+'/'+fileName
-            with open(os.path.join(subdir_path, fileName), "wb") as f:
+            with open(img_path, "wb") as f:
                 f.write(req.content)
         except Exception as e:
             print(e)
             print("Fail to download: " + did + " " + img_url)
+
+            fail_file = open(os.path.join(usr_dir, "failed.txt"), 'a')
+            fail_file.write(img_url+'\n')
+            fail_file.close()
 
         count += 1
 
@@ -124,4 +139,4 @@ if __name__ == "__main__":
     totalDraw = getTotalDraw(bid)
     totalPage = math.ceil(totalDraw / 30)
     for page in range(totalPage):
-        downloadDrawList(bid, page, base_dir='~/Photos')
+        downloadDrawList(bid, page, base_dir='./')
