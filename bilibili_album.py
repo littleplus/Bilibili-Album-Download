@@ -1,5 +1,6 @@
-# coding=utf-8
+import time, datetime
 import requests, os, sys, math
+
 
 basicApiUrl = "https://api.vc.bilibili.com/link_draw/v1/doc/upload_count?uid="
 apiUrl = (
@@ -26,7 +27,14 @@ def getTotalDraw(bid):
 
 
 # Get the draw list, 30 draws in each page
-def downloadDrawList(bid, page):
+def downloadDrawList(bid, page, base_dir='~/Photos'):
+    # Create drawer's directory
+    usr_dir = os.path.join(base_dir, bid)
+    try:
+        os.makedirs(usr_dir)
+    except:
+        pass
+
     url = apiUrl + bid
 
     # Add page num
@@ -43,6 +51,13 @@ def downloadDrawList(bid, page):
             urls = {}
             did = str(i["doc_id"])
 
+            # convert date from ctime in response
+            date = datetime.datetime.strptime(
+                time.ctime(i["ctime"]), "%a %b %d %H:%M:%S %Y"
+            ).strftime("%Y_%m_%d")
+
+            desc = i["description"]
+
             # Single item traversal
             count = 0
             for j in i["pictures"]:
@@ -50,20 +65,31 @@ def downloadDrawList(bid, page):
                 count += 1
 
             # Download
-            downloadDraw(bid, did, urls)
+            downloadDraw(bid, did, urls, usr_dir, date, desc)
     except Exception as e:
         print(e)
         pass
 
 
 # Download draws
-def downloadDraw(bid, did, urls):
+def downloadDraw(bid, did, urls, usr_dir, date, desc):
+    if len(desc.strip()) <= 10:
+        subdir = "{}_{}".format(date, desc.strip())
+    else:
+        subdir = "{}_{}".format(date, desc.strip()[:10])
+    subdir_path = os.path.join(usr_dir, subdir)
+    print("Image saved in", subdir_path)
+    os.makedirs(subdir_path)
+
+    with open(os.path.join(subdir_path, "description.txt"), "w") as dsec_file:
+        dsec_file.write(desc)
+
     count = 0
     for i in range(len(urls)):
-        u = urls[i]
+        img_url = urls[i]
         try:
             # Get image format from url
-            suffix = u.split(".")[-1]
+            suffix = img_url.split(".")[-1]
 
             # File naming
             ## bid: Bilibili user id
@@ -71,18 +97,19 @@ def downloadDraw(bid, did, urls):
             fileName = did + "_b" + str(count) + "." + suffix
 
             if os.path.exists("./" + bid + "/" + fileName):
-                print("Skipped " + did + " " + u)
+                print("Skipped " + did + " " + img_url)
                 count += 1
                 continue
-            print("Downloading " + did + " " + u)
+            print("Downloading " + did + " " + img_url)
             # Download single image
-            req = requests.get(u, timeout=20, headers=headers)
+            req = requests.get(img_url, timeout=20, headers=headers)
             # Create image file
-            with open("./" + bid + "/" + fileName, "wb") as f:
+            # './'+bid+'/'+fileName
+            with open(os.path.join(subdir_path, fileName), "wb") as f:
                 f.write(req.content)
         except Exception as e:
             print(e)
-            print("Fail to download: " + did + " " + u)
+            print("Fail to download: " + did + " " + img_url)
 
         count += 1
 
@@ -94,13 +121,7 @@ if __name__ == "__main__":
 
     bid = str(sys.argv[1])
 
-    # Create drawer's directory
-    try:
-        os.makedirs("./" + bid)
-    except:
-        pass
-
     totalDraw = getTotalDraw(bid)
     totalPage = math.ceil(totalDraw / 30)
     for page in range(totalPage):
-        downloadDrawList(bid, page)
+        downloadDrawList(bid, page, base_dir='~/Photos')
