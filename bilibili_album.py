@@ -90,11 +90,11 @@ def downloadDrawList(bid, page, usrDir):
 
 # Download draws
 def downloadDraw(bid, did, urls, usrDir, date, desc):
+    desc = desc.strip().replace("\n", "")
     # .strip() only removes the substrings from the string’s start and end position
-    if len(desc.replace("\n", "")) <= 10:
-        subdir = "{}_{}".format(date, desc.replace("\n", ""))
-    else:
-        subdir = "{}_{}".format(date, desc.replace("\n", "")[:10])
+    if len(desc) > 10:
+        desc = desc[:10].strip()
+    subdir = "{}_{}".format(date, desc)
     subdirPath = os.path.join(usrDir, subdir)
     print("Image saved in", subdirPath)
     if not os.path.exists(subdirPath):
